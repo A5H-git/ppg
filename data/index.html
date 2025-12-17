@@ -1,0 +1,74 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/uPlot.min.css">
+    <script src="/uPlot.iife.min.js"></script>
+  </head>
+
+  <body>
+    <div id="chart" style="position: relative;">
+      <div id="metrics" style="position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.6); color: #fff; padding: 8px 12px; border-radius: 4px; font-family: monospace; font-size: 14px;">
+        IR: -- | BPM: -- | Avg: --
+      </div>
+    </div>
+
+    <script>
+      const timeData = [];
+      const bpmData = [];
+      const avgData = [];
+      const MAX_POINTS = 300;
+      const SAMPLE_INTERVAL_MS = 1000;
+
+      const plot = new uPlot({
+        width: window.innerWidth,
+        height: 300,
+        scales: { x: { time: false } },
+        series: [
+          {},
+          { label: "BPM", stroke: "red", width: 2 },
+          { label: "Avg BPM", stroke: "orange", width: 1 },
+        ],
+      }, [timeData, bpmData, avgData], document.getElementById("chart"));
+
+      function updateMetricBox(entry) {
+        const metrics = document.getElementById('metrics');
+        metrics.textContent = `IR: ${entry.irValue} | BPM: ${entry.beatsPerMinute.toFixed(1)} | Avg: ${entry.averageBPM.toFixed(1)}`;
+      }
+
+      function appendMeasurements(measurements) {
+        measurements.forEach(entry => {
+          const timeSeconds = entry.timestamp / 1000;
+          timeData.push(timeSeconds);
+          bpmData.push(entry.beatsPerMinute);
+          avgData.push(entry.averageBPM);
+          updateMetricBox(entry);
+        });
+
+        while (timeData.length > MAX_POINTS) {
+          timeData.shift();
+          bpmData.shift();
+          avgData.shift();
+        }
+
+        plot.setData([timeData, bpmData, avgData]);
+      }
+
+      function fetchMeasurements() {
+        fetch("/api/measurements")
+          .then(response => response.json())
+          .then(body => {
+            if (Array.isArray(body.measurements)) {
+              appendMeasurements(body.measurements);
+            }
+          })
+          .catch(err => console.error("Failed to fetch measurement batch", err));
+      }
+
+      fetchMeasurements();
+      let fetchTimer = setInterval(fetchMeasurements, SAMPLE_INTERVAL_MS);
+
+    </script>
+  </body>
+</html>
