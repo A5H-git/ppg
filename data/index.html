@@ -13,62 +13,6 @@
         IR: -- | BPM: -- | Avg: --
       </div>
     </div>
-
-    <script>
-      const timeData = [];
-      const bpmData = [];
-      const avgData = [];
-      const MAX_POINTS = 300;
-      const SAMPLE_INTERVAL_MS = 1000;
-
-      const plot = new uPlot({
-        width: window.innerWidth,
-        height: 300,
-        scales: { x: { time: false } },
-        series: [
-          {},
-          { label: "BPM", stroke: "red", width: 2 },
-          { label: "Avg BPM", stroke: "orange", width: 1 },
-        ],
-      }, [timeData, bpmData, avgData], document.getElementById("chart"));
-
-      function updateMetricBox(entry) {
-        const metrics = document.getElementById('metrics');
-        metrics.textContent = `IR: ${entry.irValue} | BPM: ${entry.beatsPerMinute.toFixed(1)} | Avg: ${entry.averageBPM.toFixed(1)}`;
-      }
-
-      function appendMeasurements(measurements) {
-        measurements.forEach(entry => {
-          const timeSeconds = entry.timestamp / 1000;
-          timeData.push(timeSeconds);
-          bpmData.push(entry.beatsPerMinute);
-          avgData.push(entry.averageBPM);
-          updateMetricBox(entry);
-        });
-
-        while (timeData.length > MAX_POINTS) {
-          timeData.shift();
-          bpmData.shift();
-          avgData.shift();
-        }
-
-        plot.setData([timeData, bpmData, avgData]);
-      }
-
-      function fetchMeasurements() {
-        fetch("/api/measurements")
-          .then(response => response.json())
-          .then(body => {
-            if (Array.isArray(body.measurements)) {
-              appendMeasurements(body.measurements);
-            }
-          })
-          .catch(err => console.error("Failed to fetch measurement batch", err));
-      }
-
-      fetchMeasurements();
-      let fetchTimer = setInterval(fetchMeasurements, SAMPLE_INTERVAL_MS);
-
-    </script>
+    <script src="/app.js"></script>
   </body>
 </html>

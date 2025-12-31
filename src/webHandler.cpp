@@ -53,6 +53,7 @@ bool initializeWebServer() {
   
     server.serveStatic("/uPlot.min.css", LittleFS, "/uPlot.min.css");
     server.serveStatic("/uPlot.iife.min.js", LittleFS, "/uPlot.iife.min.js");
+    server.serveStatic("/app.js", LittleFS, "/app.js");
   
     server.on("/", HTTP_GET, [](AsyncWebServerRequest* request) {
       request->send(LittleFS, "/index.html", "text/html");
