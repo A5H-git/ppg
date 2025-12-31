@@ -11,6 +11,7 @@ static MAX30105 particleSensor;
 *=============*/
 static const int PRESENCE_THRESHOLD_IR = 100000; // Threshold for detecting presence
 static const byte AVG_SAMPLING_WINDOW_SIZE = 4; // Size of the averaging window
+static const long IR_JUMP_THRESHOLD = 1000; // Max allowed change between samples
 
 // Sensor Configuration
 static const byte SDA_PIN = 21;
@@ -18,13 +19,13 @@ static const byte SCL_PIN = 22;
 static const byte MIN_VALID_BPM = 20;
 static const byte MAX_VALID_BPM = 255;
 static const byte MAX_SAMPLES_PER_CALL = 4;
-static const byte LED_BRIGHTNESS=31U; // default
-static const byte SAMPLE_AVG= 4U; // default
-static const byte LED_MODE= 2U; // turn off green
-static const int SAMPLE_RATE= 200; // custom!
-static const int PULSE_WIDTH= 411; // default
-static const int ADC_RANGE =  4096; // default
 
+static const byte LED_BRIGHTNESS = 0x1F; // datasheet
+static const byte SAMPLE_AVG = 4;
+static const byte LED_MODE = 2; // red + IR
+static const int SAMPLE_RATE = 400;
+static const int PULSE_WIDTH = 411;
+static const int ADC_RANGE = 4096;
 
 // Circular buffer for BPM samples
 static float tSamples[AVG_SAMPLING_WINDOW_SIZE];
@@ -33,6 +34,8 @@ static byte tIndex = 0;
 
 // Variables
 static long irValue = 0;
+static long lastIRValue = 0;
+static bool hasLastIR = false;
 static float beatsPerMinute = 0.0f;
 static float averageBPM = 0.0f;
 static long lastBeat = 0;
@@ -97,6 +100,12 @@ static void enqueueMeasurement() {
   }
 }
 
+static bool isValidBpmMeasurement(float bpm) {
+  bool bpmOk = (bpm >= MIN_VALID_BPM && bpm <= MAX_VALID_BPM);
+  bool jumpOk = (!hasLastIR) || (labs(irValue - lastIRValue) <= IR_JUMP_THRESHOLD);
+  return bpmOk && jumpOk;
+}
+
 static void processSample(long sample) {
   irValue = sample;
   lastMeasurementTimestamp = millis();
@@ -114,16 +123,21 @@ static void processSample(long sample) {
       long dT = now - lastBeat; // ms between beats
 
       float bpm = 60000.0 / (float)dT;
-      if (bpm > MIN_VALID_BPM && bpm < MAX_VALID_BPM) {
+
+      // Simple physiological BPM validation
+      if (isValidBpmMeasurement(bpm)) {
         beatsPerMinute = bpm;
         updateAverageBPM(bpm);
       }
+      
     }
-
+    
     lastBeat = now;
   }
 
   enqueueMeasurement();
+  lastIRValue = irValue;
+  hasLastIR = true;
 }
 
 /*========================
@@ -161,22 +175,19 @@ bool initializeHeartMonitor() {
     return false;
   }
 
-  particleSensor.setup();
-
-  // particleSensor.setup(
-  //   LED_BRIGHTNESS,
-  //   SAMPLE_AVG,
-  //   LED_MODE,
-  //   SAMPLE_RATE,
-  //   PULSE_WIDTH,
-  //   ADC_RANGE
-  // ); 
+  particleSensor.setup(
+    LED_BRIGHTNESS,
+    SAMPLE_AVG,
+    LED_MODE,
+    SAMPLE_RATE,
+    PULSE_WIDTH,
+    ADC_RANGE
+  );
 
   // Set sensor intensities; green not needed
-  particleSensor.setPulseAmplitudeRed(0x0A);
-  // particleSensor.setPulseAmplitudeIR(0x1F); // use default
+  particleSensor.setPulseAmplitudeRed(LED_BRIGHTNESS);
+  particleSensor.setPulseAmplitudeIR(LED_BRIGHTNESS); // use default
   particleSensor.setPulseAmplitudeGreen(0);  
-
   return true;
 }
 
