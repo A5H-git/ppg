@@ -127,8 +127,8 @@ static void processSample(long sample) {
 }
 
 /*========================
- * Public API Functions
- *========================*/
+* Public API Functions
+*========================*/
 
 HeartMonitorMeasurements getMeasurements() {
   HeartMonitorMeasurements measurements;

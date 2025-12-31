@@ -4,7 +4,7 @@
 #include "webHandler.h"
 
 
-#define debug Serial //Uncomment this line if you're using an Uno or ESP
+#define debug Serial
 
 void printSensorValues(long irVal, float beatsPerMintue, float avgBPM)  {
 
