@@ -11,3 +11,14 @@ For this project, I have created a simple **ESP32** and **MAX30102** circuit wit
 3. Integrate multiple technologies (`python`, `JavaScript`, etc.) into nice embedded stack.
 4. Apply some real-time health analytics + ML (later).
 5. Develop something fun!
+
+## Images
+Circuit overview with the ESP32 and MAX30102 wiring.
+<div align="center"><img src="media/circuit.png" alt="Circuit wiring" width="600" height="400"></div>
+
+Schematic diagram of the circuit connections.
+<div align="center"><img src="media/schematic.png" alt="Circuit schematic" width="600" height="400"></div>
+
+Web interface for live PPG visualization.
+<div align="center"><img src="media/webpage.png" alt="Webpage view" width="600" height="400"></div>
+
